@@ -1,10 +1,144 @@
 ---
-description: Generate a new mobile UI component using the project's design tokens and platform conventions
-allowed-tools: Read, Write, Bash
-argument-hint: component-name
+description: Generate mobile UI components using the project's design tokens and platform conventions — single component, all components, or scan for patterns to extract
+allowed-tools: Read, Write, Bash, AskUserQuestion, Glob, Grep
+argument-hint: component-name | all | scan
 ---
 
 # Generate Component: $1
+
+## Mode Detection
+
+Check the value of `$1`:
+
+- **`$1` is `all`** → follow **All Mode** below — generate every component in the project
+- **`$1` is `scan`** → follow **Scan Mode** below — find unextracted UI patterns
+- **Anything else** → treat `$1` as a component name and follow **Single Mode** (the rest of this document)
+
+---
+
+## All Mode — Generate Full Component Library
+
+Read `CLAUDE.md` for project context (platform, token file, conventions).
+
+### Step 1 — Find all components
+
+Scan for component files in platform-specific locations:
+- **React Native**: `src/components/`, `components/`, `src/ui/`
+- **Flutter**: `lib/widgets/`, `lib/components/`, `lib/ui/`
+- **SwiftUI**: project source groups — look for `*View.swift` or `*.swift` files that are not screens
+- **Kotlin Compose**: `app/src/main/java/.../ui/components/`
+
+Build a deduplicated list of component names.
+
+### Step 2 — Confirm the list
+
+Present the full list via AskUserQuestion with `multiSelect: true`:
+- question: "Which components would you like to generate (or regenerate)?"
+- header: "Components"
+- options: [list all found component names]
+
+### Step 3 — Generate each confirmed component
+
+For each confirmed component:
+1. Read the existing file to understand the current API and variants (if it exists)
+2. Generate a complete version using the project's tokens and platform conventions
+3. Match all existing props/parameters exactly — do not change the component's API
+4. Include all interactive states (default, pressed, focused, disabled)
+5. Every value must reference a token — no hardcoded colors, spacing, or sizing
+6. Meet minimum touch target requirements (44pt iOS, 48dp Android)
+7. Include all required accessibility attributes for the platform
+8. Save to the same file location (overwrite) or to the platform's standard directory for new components
+
+After each component:
+```
+✓ AppButton — src/components/AppButton.tsx (regenerated)
+✓ AppCard — src/components/AppCard.tsx (regenerated)
+✓ AppBadge — src/components/AppBadge.tsx (regenerated)
+```
+
+### Step 4 — Summary table
+
+| Component | Status | File |
+|-----------|--------|------|
+| AppButton | Generated | src/components/AppButton.tsx |
+| AppCard | Generated | src/components/AppCard.tsx |
+| AppBadge | Generated | src/components/AppBadge.tsx |
+
+---
+
+## Scan Mode — Find Unextracted Patterns
+
+Read `CLAUDE.md` for project context (platform, token file).
+
+### Step 1 — Scan for repeated patterns
+
+Grep across all platform source files for:
+
+**React Native** (`.tsx`, `.ts`, `.jsx`, `.js`):
+- Inline `StyleSheet.create()` objects with the same structure appearing in multiple files
+- Repeated JSX structures (same sequence of React Native elements: `<View> + <Image> + <Text>`)
+- The same style values appearing more than 3 times (hardcoded hex colors, repeated spacing numbers)
+
+**Flutter** (`.dart`):
+- `Column` or `Row` widget structures that appear identically in 3+ widget files
+- Repeated decoration objects (`BoxDecoration`, `BorderRadius`) defined inline instead of as tokens
+- `GestureDetector` or `InkWell` wrappers with the same child structure in multiple files
+
+**SwiftUI** (`.swift`):
+- Repeated `VStack`/`HStack` view structures across multiple view files
+- Inline `.foregroundColor()`, `.font()`, `.padding()` chains repeated identically in 4+ places
+- Custom ViewModifiers that haven't been extracted yet
+
+**Kotlin Compose** (`.kt`):
+- `Column` or `Row` composables with identical child patterns in multiple files
+- Repeated `Modifier` chains appearing in 4+ places
+- Hardcoded `Color()` or `.dp` values appearing identically across composables
+
+### Step 2 — Present findings
+
+Show each pattern as a suggested component extraction:
+
+```
+Suggested component extractions:
+
+1. ProductCard — card structure with image, title, and price appears in 5 files
+   Files: ShoeCard.tsx, FeaturedItem.tsx, SearchResult.tsx, ...
+   Pattern: <View style={styles.card}> <Image> <Text style={styles.title}> <Text style={styles.price}>
+
+2. SectionHeader — title + subtitle view appears in 4 screens
+   Files: HomeScreen.tsx, CollectionScreen.tsx, ProfileScreen.tsx, AboutScreen.tsx
+   Pattern: <View> <Text style={styles.heading}> <Text style={styles.subtitle}>
+
+3. TagBadge — repeated inline View+Text pattern for status labels in 6 places
+```
+
+### Step 3 — Ask what to generate
+
+Use AskUserQuestion with `multiSelect: true`:
+- question: "Which patterns should I extract into reusable components?"
+- header: "Extract"
+- options: [list each suggested component name]
+
+### Step 4 — Generate each selected component
+
+For each selected pattern:
+1. Extract the shared structure
+2. Replace all hardcoded values with token references
+3. Identify the variants present across implementations and expose them as props/parameters
+4. Add all interactive states and platform-appropriate accessibility attributes
+5. Meet minimum touch target requirements
+6. Save to the platform's standard component location
+
+After generating each:
+```
+✓ ProductCard — src/components/ProductCard.tsx
+  Props: imageSource, title, price, variant ('default' | 'featured'), onPress
+  Found in: 5 files — consider replacing inline implementations with this component
+```
+
+---
+
+## Single Mode — Generate One Component
 
 ## Before You Build
 

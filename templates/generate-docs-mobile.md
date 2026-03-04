@@ -1,10 +1,75 @@
 ---
-description: Generate structured markdown documentation for a mobile UI component
-allowed-tools: Read, Write, Glob
-argument-hint: component-name-or-path
+description: Generate structured markdown documentation for mobile UI components — single component or all components at once
+allowed-tools: Read, Write, Glob, AskUserQuestion
+argument-hint: component-name-or-path | all
 ---
 
 # Generate Docs: $1
+
+## Mode Detection
+
+Check the value of `$1`:
+
+- **`$1` is `all`** → follow **All Mode** below — document every component in the project
+- **Anything else** → treat `$1` as a component name or file path and follow **Single Mode**
+
+---
+
+## All Mode — Document Every Component
+
+Read `CLAUDE.md` for project context (platform, token file, component locations).
+
+### Step 1 — Find all components
+
+Scan platform-specific locations:
+- **React Native**: `src/components/`, `components/`, `src/ui/`
+- **Flutter**: `lib/widgets/`, `lib/components/`, `lib/ui/`
+- **SwiftUI**: project source groups — look for `*View.swift` and component `.swift` files
+- **Kotlin Compose**: `app/src/main/java/.../ui/components/`
+
+Deduplicate and list them.
+
+### Step 2 — Confirm the list
+
+Present via AskUserQuestion with `multiSelect: true`:
+- question: "Which components would you like to document?"
+- header: "Components"
+- options: [list all found component names]
+
+### Step 3 — Document each confirmed component
+
+For each confirmed component:
+1. Read the component source file
+2. Read the token file to identify which tokens the component uses
+3. Write `docs/components/[component-name].md` following the Single Mode structure below
+4. Create the `docs/components/` directory if it doesn't exist
+
+After each doc:
+```
+✓ docs/components/app-button.md
+✓ docs/components/app-card.md
+✓ docs/components/app-badge.md
+```
+
+### Step 4 — Summary
+
+```
+Documentation complete.
+
+6 components documented:
+  docs/components/app-button.md
+  docs/components/app-card.md
+  docs/components/app-badge.md
+  docs/components/app-input.md
+  docs/components/app-modal.md
+  docs/components/app-spinner.md
+
+Run /audit-ui to check these components for token drift and accessibility issues.
+```
+
+---
+
+## Single Mode — Document One Component
 
 ## Before You Write
 

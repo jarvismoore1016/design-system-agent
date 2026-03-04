@@ -236,7 +236,7 @@ Write the file `.claude/commands/audit-ui.md`:
 ```markdown
 ---
 description: Audit the UI for visual consistency, token drift, and accessibility issues
-allowed-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Write
 ---
 
 # UI Audit
@@ -260,36 +260,31 @@ For each finding, show:
 - The hardcoded value found
 - The token it should use instead
 
-### 2. Accessibility
-Check for:
-- Form `<input>`, `<select>`, and `<textarea>` elements without an associated `<label>` or `aria-label`
-- `<img>` elements with missing or empty `alt` attributes
-- `<button>` and `<a>` elements with non-descriptive text ("click here", "read more", "here")
-- Icon-only buttons or links without `aria-label` or `aria-describedby`
-- `outline: none` or `outline: 0` without a replacement `:focus-visible` style
-- Interactive elements that appear non-interactive (no cursor, no focus style)
+### 2. Accessibility (WCAG 2.1 AA)
+Check for the following. Tag each finding with its WCAG criterion.
+
+- Color contrast [WCAG 1.4.3]: normal text 4.5:1, large text (18px+ or 14px bold) 3:1
+- UI component contrast [WCAG 1.4.11]: borders, icons, and interactive components must meet 3:1
+- Form labels [WCAG 1.3.1]: every input, select, textarea must have a programmatic label — placeholder alone is not sufficient
+- Focus visible [WCAG 2.4.7]: outline: none without a :focus-visible replacement is a violation
+- Keyboard navigability [WCAG 2.1.1]: all interactive elements reachable by Tab; custom controls have tabindex="0" and keyboard handlers
+- No keyboard traps [WCAG 2.1.2]: modals trap focus and have a keyboard-accessible close mechanism
+- Text alternatives [WCAG 1.1.1]: img elements have alt, icon-only buttons have aria-label
+- Non-descriptive link/button text [WCAG 2.4.6]: "click here", "read more", "here" are violations
+- Error identification [WCAG 3.3.1]: form errors described in text, not only by color or icon
+- Missing ARIA [WCAG 4.1.2]: custom interactive elements missing role, aria-expanded, aria-controls, aria-haspopup
+
+Tag each finding: [ACCESSIBILITY] path/to/file:line [WCAG X.X.X]
 
 ### 3. Component Inconsistency
-Look for:
-- The same UI pattern implemented multiple ways (e.g., three different card HTML structures with different class names)
-- Similar class names that suggest parallel implementations (`.btn`, `.button`, `.cta-button`)
-- Inline `style=""` attributes that could be extracted to shared classes or tokens
+Look for the same UI pattern implemented multiple ways, similar class names suggesting parallel implementations, and inline style attributes that belong in shared classes or tokens.
 
 ### 4. Contrast (Flag for Review)
-Flag text + background color combinations where the text color is a light gray on a light background, or where hardcoded colors are used for text that may fail WCAG AA (4.5:1 for normal text, 3:1 for large text). Note these as "needs manual contrast check."
+Flag text + background combinations likely to fail WCAG AA. Estimate the ratio when values are known. Note as "needs manual contrast check" when exact values can't be determined statically.
 
 ## Output Format
 
-Group findings by category. For each finding:
-
-```
-[CATEGORY] path/to/file.css:42
-  Found: color: #2980B9
-  Token: --color-primary (or $color-primary)
-  Fix: Replace hardcoded value with token
-```
-
-End with a summary table:
+Group findings by category. End with a summary table:
 
 | Category | Critical | Warning | Suggestion |
 |----------|----------|---------|------------|
@@ -299,7 +294,17 @@ End with a summary table:
 | Contrast | - | - | - |
 | **Total** | | | |
 
-Finish with 3-5 prioritized next steps based on the most common or highest-impact findings.
+Finish with 3-5 prioritized next steps.
+
+## Interactive Fix Mode
+
+After the summary table, use AskUserQuestion with multiSelect: true to ask which categories to fix:
+- Token drift
+- Accessibility
+- Inconsistency
+- Contrast
+
+For each selected category, go through findings one by one. Before each fix, show the finding and use AskUserQuestion (options: Yes / Skip / Stop). If Yes: apply the fix and show a brief diff. After each category: show a count of fixes applied vs skipped.
 ```
 
 After writing the file, tell the user what was created and how to use it. Use AskUserQuestion:
@@ -324,59 +329,49 @@ Write the file `.claude/commands/generate-component.md`:
 
 ```markdown
 ---
-description: Generate a new UI component using the project's design tokens and conventions
-allowed-tools: Read, Write, Bash
-argument-hint: component-name
+description: Generate UI components using the project's design tokens and conventions
+allowed-tools: Read, Write, Bash, AskUserQuestion, Glob, Grep
+argument-hint: component-name | all | scan
 ---
 
 # Generate Component: $1
+
+## Mode Detection
+
+- $1 is `all` → generate every component (All Mode)
+- $1 is `scan` → find unextracted patterns (Scan Mode)
+- Anything else → generate one component (Single Mode)
+
+## All Mode
+
+Read CLAUDE.md. Scan src/components/, components/, src/ui/ for component files. Present the full list via AskUserQuestion (multiSelect: true). For each confirmed component: read the existing file, regenerate a complete version using project tokens and conventions, preserve the existing API. Save to the same location. End with a summary table of components generated.
+
+## Scan Mode
+
+Read CLAUDE.md. Grep across source files for repeated patterns: inline styles with the same property+value appearing 3+ times, duplicated JSX/HTML structures in 3+ files, repeated class name clusters used together in 4+ places. Present findings as suggested components to extract. Ask via AskUserQuestion (multiSelect: true) which ones to generate. For each selected: extract the shared structure, replace hardcoded values with tokens, identify variants, add states and accessibility. Save to src/components/.
+
+## Single Mode
 
 Read CLAUDE.md first for:
 - Token file path and token naming convention
 - Tech stack and output file format
 - Existing component patterns to follow
 
-Then read the token file to understand available values.
-
-## What to Generate
+Then read the token file. Find 1-2 existing components and match their conventions.
 
 Create a complete $1 component that:
+- Uses tokens for everything — no hardcoded colors, spacing, or sizing
+- Includes all interactive states: default, hover, focus (never outline: none), active/pressed, disabled
+- Is accessible: correct semantic element, ARIA attributes, keyboard interaction, visible focus indicator
+- Follows project conventions: naming, file structure, prop/variant pattern
 
-**Uses tokens for everything** — no hardcoded colors, spacing, or sizing. Reference token variables or imports directly.
+Output format by stack:
+- Vanilla HTML/CSS: HTML snippet + CSS block using var(--token-name)
+- React JS/TS: .jsx/.tsx functional component with CSS module
+- Vue: Single File Component with template, script setup, style scoped
+- Svelte: .svelte file with script, markup, style
 
-**Includes all interactive states**:
-- Default
-- Hover
-- Focus (visible, meets WCAG — never `outline: none`)
-- Active / pressed
-- Disabled (both visually distinct and `aria-disabled` or `disabled` attribute)
-
-**Is accessible**:
-- Correct semantic HTML element for the role
-- ARIA attributes where native semantics aren't enough
-- Keyboard interaction patterns (Enter/Space for buttons, arrow keys for groups)
-- Visible focus indicator
-
-**Follows project conventions**:
-- Matches the naming pattern used in existing components
-- Uses the same file structure (CSS module, styled component, scoped styles, etc.)
-- Matches the prop/variant pattern used in existing components
-
-## Output Format by Stack
-
-**Vanilla HTML/CSS**: Output an HTML snippet and a CSS class block. Use CSS custom properties from tokens.css.
-
-**React (JS/TS)**: Output a functional component file. TypeScript projects get typed props interface. Use CSS modules or styled-components matching project conventions.
-
-**Vue**: Output a Single File Component with `<template>`, `<script setup lang="ts">` (or JS), and `<style scoped>`.
-
-**Svelte**: Output a .svelte file with `<script>`, markup, and `<style>`.
-
-## After the Component
-
-Add a usage example as a code comment at the bottom of the file.
-
-Tell the user where the file was saved and how to import/use it.
+Add a usage example as a comment. Tell the user where the file was saved and how to import/use it.
 ```
 
 After writing, demonstrate by generating one component based on the most common pattern found in the codebase. Show the user the output.
@@ -391,43 +386,48 @@ Write the file `.claude/commands/generate-docs.md`:
 
 ```markdown
 ---
-description: Generate structured markdown documentation for a component
-allowed-tools: Read, Write, Glob
-argument-hint: component-name-or-path
+description: Generate structured markdown documentation for components — one or all at once
+allowed-tools: Read, Write, Glob, AskUserQuestion
+argument-hint: component-name-or-path | all
 ---
 
 # Generate Docs: $1
 
-Read CLAUDE.md for project context. Then find the component file(s) for $1 — check common locations (src/components/, components/, src/ui/, etc.) or use $1 as a direct file path if it looks like one.
+## Mode Detection
 
-Read the component file(s) carefully.
+- $1 is `all` → document every component (All Mode)
+- Anything else → document one component (Single Mode)
 
-## Documentation to Produce
+## All Mode
 
-Write a markdown file to `docs/components/[component-name].md` (create the `docs/components/` directory if it doesn't exist). If a `docs/` folder already exists in the project root or next to the component, use that instead.
+Read CLAUDE.md for project context. Scan src/components/, components/, src/ui/ for component files. Present the full list via AskUserQuestion (multiSelect: true). For each confirmed component: read the source file and token file, write docs/components/[name].md using the Single Mode structure below. Create the docs/components/ directory if it doesn't exist. End with a summary listing X components documented and the path to each file.
 
-Include these sections:
+## Single Mode
+
+Read CLAUDE.md for project context. Find the component file for $1. Check: direct file path, src/components/[name].[ext], components/[name].[ext], src/ui/[name].[ext]. Read the component file and any associated CSS file. Read the token file.
+
+Write docs/components/[component-name].md. Include:
 
 ### Overview
 What this component is. When to use it vs. alternatives. 2-4 sentences.
 
 ### Variants
-Table or list of all visual/functional variants with a brief description of each.
+Table of all visual/functional variants with use case for each.
 
 ### States
-Table showing: Default, Hover, Focus, Active, Disabled, and any component-specific states (loading, error, success, etc.).
+Table: Default, Hover, Focus, Active, Disabled, plus any component-specific states (loading, error, success).
 
 ### Props / API
-For JS framework components: table with Prop, Type, Default, and Description columns.
-For vanilla HTML components: table with Class/Attribute, Values, and Description columns.
+JS framework: Prop | Type | Default | Description table.
+Vanilla HTML: Class/Attribute | Values | Description table.
 
 ### Design Tokens Used
-List which tokens from the token file this component references and why each one is used.
+Table of tokens the component references and the role of each.
 
 ### Accessibility
 - Semantic element used and why
 - ARIA attributes applied
-- Keyboard interactions (what keys do what)
+- Keyboard interactions
 - Screen reader behavior
 - Any known gotchas
 
@@ -435,11 +435,11 @@ List which tokens from the token file this component references and why each one
 3-5 bullets each. Focus on common misuse patterns specific to this component.
 
 ### Usage Examples
-2-3 copy-paste ready code examples covering the most common use cases.
+2-3 copy-paste ready code examples.
 
 ## After Writing
 
-Tell the user the path to the generated file and suggest running it on other components.
+Tell the user the path to the generated file. Suggest running /generate-docs all to document additional components.
 ```
 
 After writing the file, generate documentation for the component created in Step 4. Show the user what it looks like.

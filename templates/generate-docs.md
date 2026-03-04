@@ -1,10 +1,75 @@
 ---
-description: Generate structured markdown documentation for a UI component
-allowed-tools: Read, Write, Glob
-argument-hint: component-name-or-path
+description: Generate structured markdown documentation for UI components — single component or all components at once
+allowed-tools: Read, Write, Glob, AskUserQuestion
+argument-hint: component-name-or-path | all
 ---
 
 # Generate Docs: $1
+
+## Mode Detection
+
+Check the value of `$1`:
+
+- **`$1` is `all`** → follow **All Mode** below — document every component in the project
+- **Anything else** → treat `$1` as a component name or file path and follow **Single Mode**
+
+---
+
+## All Mode — Document Every Component
+
+Read `CLAUDE.md` for project context (stack, component locations, existing docs folder).
+
+### Step 1 — Find all components
+
+Scan for component files in standard locations:
+- `src/components/`, `components/`, `src/ui/`, `src/lib/`
+- Look for `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html` files with component-like names (capitalized, or index files inside named directories)
+
+Deduplicate and list them.
+
+### Step 2 — Confirm the list
+
+Present via AskUserQuestion with `multiSelect: true`:
+- question: "Which components would you like to document?"
+- header: "Components"
+- options: [list all found component names]
+
+### Step 3 — Document each confirmed component
+
+For each confirmed component:
+1. Read the component source file (and any associated CSS/SCSS file)
+2. Read the token file to identify which tokens the component uses
+3. Write `docs/components/[component-name].md` following the Single Mode structure below
+4. Create the `docs/components/` directory if it doesn't exist
+
+After each doc:
+```
+✓ docs/components/button.md
+✓ docs/components/card.md
+✓ docs/components/badge.md
+```
+
+### Step 4 — Summary
+
+```
+Documentation complete.
+
+8 components documented:
+  docs/components/button.md
+  docs/components/card.md
+  docs/components/badge.md
+  docs/components/input.md
+  docs/components/modal.md
+  docs/components/nav.md
+  docs/components/avatar.md
+  docs/components/spinner.md
+
+Run /audit-ui to check these components for token drift and accessibility issues.
+```
+
+---
+
+## Single Mode — Document One Component
 
 ## Before You Write
 

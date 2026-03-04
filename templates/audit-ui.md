@@ -1,6 +1,6 @@
 ---
 description: Audit the UI for visual consistency, token drift, and accessibility issues
-allowed-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Write
 ---
 
 # UI Audit
@@ -37,20 +37,51 @@ For each finding:
   Fix: Replace with var(--color-primary)
 ```
 
-### 2. Accessibility
+### 2. Accessibility (WCAG 2.1 AA)
 
-Check for:
-- `<input>`, `<select>`, `<textarea>` elements without an associated `<label>` element or `aria-label` / `aria-labelledby` attribute
-- `<img>` elements with missing or empty `alt` attributes (decorative images should have `alt=""`, not no attribute)
-- `<button>` or `<a>` elements with non-descriptive visible text: "click here", "read more", "here", "link", "button"
-- Icon-only interactive elements (buttons, links) without `aria-label` or visually-hidden text
-- `outline: none` or `outline: 0` without a replacement `:focus-visible` style
-- Missing `role` attributes on custom interactive elements (e.g., a `<div>` with a click handler)
-- Missing `aria-expanded`, `aria-controls`, or `aria-haspopup` on disclosure and menu components
+Check for the following. Tag each finding with its WCAG criterion.
 
-For each finding:
+**Color contrast** `[WCAG 1.4.3]` `[WCAG 1.4.11]`:
+- Normal text (under 18px regular or 14px bold): must meet 4.5:1 contrast ratio against its background
+- Large text (18px+ regular or 14px+ bold): must meet 3:1
+- UI components and graphical objects (borders, icons, chart lines): must meet 3:1 against adjacent colors
+- Flag any text or UI element where the computed contrast is likely to fail — show the estimated ratio
+
+**Keyboard navigability** `[WCAG 2.1.1]` `[WCAG 2.4.3]`:
+- All interactive elements (buttons, links, inputs, selects, checkboxes, custom controls) must be reachable by Tab
+- Focus order must follow the visual/logical reading order — flag if a `tabindex` value creates an illogical sequence
+- Flag `<div>`, `<span>`, or `<li>` elements with click handlers but no `tabindex="0"` and no keyboard event handler
+
+**Focus visible** `[WCAG 2.4.7]`:
+- Every interactive element must show a visible focus indicator
+- `outline: none` or `outline: 0` without a replacement `:focus-visible` style is a violation
+- Focus indicator must have at least 3:1 contrast against adjacent colors
+
+**No keyboard traps** `[WCAG 2.1.2]`:
+- Modals, drawers, and dialogs must trap focus while open AND provide a keyboard-accessible close mechanism (Escape key or a focusable close button)
+- Custom dropdown menus must not leave keyboard users unable to exit
+
+**Text alternatives** `[WCAG 1.1.1]`:
+- `<img>` elements: must have `alt` attribute — decorative images use `alt=""`, informative images describe the content
+- Icon-only interactive elements (buttons, links) must have `aria-label` or visually-hidden text
+- SVG icons used as content must have `<title>` or `aria-label`
+
+**Form labels** `[WCAG 1.3.1]`:
+- Every `<input>`, `<select>`, and `<textarea>` must have a programmatic label: `<label for="...">`, `aria-label`, or `aria-labelledby`
+- `placeholder` text alone is not a label — it disappears on input and has insufficient contrast
+
+**Error identification** `[WCAG 3.3.1]`:
+- Form validation errors must be described in text — not only through color or icon
+- Error messages must be associated with their input via `aria-describedby` or `aria-errormessage`
+
+**Additional checks**:
+- `<button>` or `<a>` with non-descriptive text: "click here", "read more", "here", "link", "button" `[WCAG 2.4.6]`
+- Missing `role` on custom interactive elements (e.g., `<div onClick={...}>`) `[WCAG 4.1.2]`
+- Missing `aria-expanded`, `aria-controls`, or `aria-haspopup` on disclosure and menu components `[WCAG 4.1.2]`
+
+For each finding, include the WCAG criterion tag:
 ```
-[ACCESSIBILITY] path/to/file.html:87
+[ACCESSIBILITY] path/to/file.html:87 [WCAG 1.3.1]
   Issue: Input has no associated label
   Element: <input type="email" placeholder="Email">
   Fix: Add <label for="email"> or aria-label="Email address"
@@ -103,6 +134,70 @@ After all findings, write a summary table:
 | **Total** | | | |
 
 End with **3-5 prioritized next steps** based on the highest-impact findings — not a list of every fix, just the most valuable starting points.
+
+---
+
+## Interactive Fix Mode
+
+After presenting the summary table and next steps, enter interactive fix mode.
+
+### Step 1 — Ask which categories to fix
+
+Use AskUserQuestion with `multiSelect: true`:
+- question: "Which categories of findings would you like me to fix now?"
+- header: "Fix categories"
+- options:
+  - Token drift (replace hardcoded values with token references)
+  - Accessibility (apply ARIA fixes, labels, focus styles)
+  - Inconsistency (consolidate duplicate component patterns)
+  - Contrast (adjust colors to meet WCAG AA ratios)
+
+If the user selects none, end here. If they close or skip, end here.
+
+### Step 2 — Fix findings one at a time
+
+For each selected category, go through every finding in that category one by one.
+
+Before each fix, show the finding in full and use AskUserQuestion:
+- question: "Fix this finding?\n\n[CATEGORY] path/to/file:line\n  Issue: [issue]\n  Fix: [proposed fix]"
+- header: "Apply fix?"
+- options:
+  - Yes — apply this fix
+  - Skip — leave it for now
+  - Stop — stop fixing this category
+
+If **Yes**: apply the fix to the file. Then show a brief diff summary:
+```
+Fixed: path/to/file.css:42
+  - color: #2563EB
+  + color: var(--color-primary)
+```
+
+If **Skip**: move to the next finding in the category.
+
+If **Stop**: stop processing the current category. If more categories are selected, move to the next one.
+
+### Step 3 — Category summary
+
+After finishing all findings in a category (or when the user stops), show:
+```
+Token drift: 4 fixes applied, 2 skipped
+```
+
+Then move to the next selected category if any.
+
+### Step 4 — Final summary
+
+After all selected categories are processed:
+```
+Fix session complete.
+  Token drift:    4 applied, 2 skipped
+  Accessibility:  6 applied, 1 skipped
+  Inconsistency:  0 applied, 3 skipped
+  Contrast:       1 applied, 0 skipped
+```
+
+---
 
 ## Scope
 

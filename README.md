@@ -149,7 +149,7 @@ Claude detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose)
 
 ## After Setup
 
-**`/audit-ui`** — Scan for design system issues
+**`/audit-ui`** — Scan for design system issues, then fix findings interactively
 
 ```
 /audit-ui                    # Scan entire project
@@ -157,22 +157,67 @@ Claude detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose)
 /audit-ui src/Button.tsx     # Audit a single file
 ```
 
-**`/generate-component`** — Build a new component using your tokens
+After the report, choose which categories to fix. For each finding, Claude asks before applying — you control exactly what changes.
+
+**`/generate-component`** — Build components using your tokens
 
 ```
-/generate-component button
-/generate-component card
-/generate-component modal
-/generate-component input
+/generate-component button   # Generate one component
+/generate-component all      # Generate every component in the project
+/generate-component scan     # Scan for unextracted patterns, then generate
 ```
 
-**`/generate-docs`** — Document a component
+**`/generate-docs`** — Document components
 
 ```
 /generate-docs button
 /generate-docs src/components/Card
-/generate-docs all           # Document all components
+/generate-docs all           # Document all components at once
 ```
+
+**`/build-design-system`** — Start fresh — no existing codebase required
+
+```
+/build-design-system
+```
+
+Walks through a six-step wizard: project type → tokens → component selection → generate all components → document all → write CLAUDE.md. Works on a blank directory.
+
+**`/build-mobile-design-system`** — Same as above, for mobile platforms
+
+```
+/build-mobile-design-system
+```
+
+Detects or asks for your platform (React Native, Flutter, SwiftUI, Kotlin Compose) and generates token files and components in the correct format for that platform.
+
+**`/sync-figma`** — Sync tokens and components with a connected Figma file
+
+```
+/sync-figma
+```
+
+Requires Figma MCP or Figma Console MCP to be connected. Four modes:
+- **Pull tokens** — extract all variables and styles from Figma, overwrite or merge with your token file
+- **Compare to Figma** — find color, spacing, and typography drift between your code and the design
+- **Generate from Figma** — build a component from a Figma spec using your project tokens
+- **Create in Figma** — push a code component into your Figma file as a proper component set
+
+---
+
+---
+
+## No Existing Codebase? Use Build Commands
+
+The standard setup workflow (`/setup-design-system`) scans an existing project and extracts its current design values. The **build commands** take the opposite approach — they generate a complete design system from scratch based on your choices.
+
+Use `/build-design-system` or `/build-mobile-design-system` when:
+- Starting a greenfield project
+- Prototyping without existing UI code
+- Bootstrapping a new package in a monorepo
+- Building a demo or starter template
+
+Both commands produce the same outputs as the setup workflow (token file, components, docs, CLAUDE.md), but with a design wizard instead of a codebase scan.
 
 ---
 

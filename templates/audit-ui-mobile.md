@@ -1,6 +1,6 @@
 ---
 description: Audit a mobile UI for token drift, accessibility issues, touch target violations, and platform convention problems
-allowed-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Write
 ---
 
 # Mobile UI Audit
@@ -54,37 +54,63 @@ For each finding:
 
 ---
 
-### 2. Accessibility
+### 2. Accessibility (WCAG 2.1 AA)
 
-**React Native**:
+Check for the following. Tag each finding with its WCAG criterion.
+
+**Color contrast** `[WCAG 1.4.3]` `[WCAG 1.4.11]`:
+- Normal text (under 18pt/sp regular or 14pt/sp bold): must meet 4.5:1 contrast against its background
+- Large text (18pt/sp+ regular or 14pt/sp+ bold): must meet 3:1
+- UI components (borders, icons, chart elements): must meet 3:1 against adjacent colors
+- Flag combinations likely to fail — show estimated ratio when values can be resolved
+
+**Text alternatives** `[WCAG 1.1.1]`:
+- Icon-only interactive elements must have an accessible name (React Native: `accessibilityLabel`; Flutter: `Semantics(label:)`; SwiftUI: `.accessibilityLabel()`; Compose: `contentDescription`)
+- Images that convey information must have a semantic label; decorative images must be excluded from accessibility tree
+
+**Accessible names and roles** `[WCAG 4.1.2]`:
+
+**React Native** `[WCAG 4.1.2]`:
 - `<Pressable>` or `<TouchableOpacity>` without `accessibilityLabel` prop
 - `<Image>` without `accessibilityLabel` (when not decorative)
-- Missing `accessibilityRole` on interactive elements (use `'button'`, `'link'`, `'checkbox'`, etc.)
-- Missing `accessibilityHint` on complex interactions
+- Missing `accessibilityRole` on interactive elements (`'button'`, `'link'`, `'checkbox'`, etc.)
+- Missing `accessibilityHint` on complex or non-obvious interactions
 - `accessible={false}` used incorrectly on interactive elements
-- Icon-only pressables with no `accessibilityLabel`
 
-**Flutter**:
+**Flutter** `[WCAG 4.1.2]`:
 - `GestureDetector` or `InkWell` wrapping a non-semantic widget without a `Semantics` ancestor
 - `Image.asset()` or `Image.network()` without `semanticsLabel`
 - Missing `Semantics` widget on custom interactive elements
-- `excludeSemantics: true` used incorrectly
+- `excludeSemantics: true` used incorrectly on interactive elements
 
-**SwiftUI**:
+**SwiftUI** `[WCAG 4.1.2]`:
 - `.onTapGesture` on non-interactive elements without `.accessibilityLabel()`
 - `Image(systemName:)` used in interactive context without `.accessibilityLabel()`
 - Missing `.accessibilityHint()` on elements with non-obvious actions
-- Incorrect `.accessibilityElement(children: .ignore)` on compound elements
+- `.accessibilityElement(children: .ignore)` used to suppress needed accessibility information
 
-**Kotlin Compose**:
+**Kotlin Compose** `[WCAG 4.1.2]`:
 - `clickable {}` modifier without `semantics { contentDescription = "..." }`
 - `Icon()` composable inside a button without `contentDescription`
 - Missing `semantics { }` block on custom interactive composables
 - `clearAndSetSemantics {}` used to remove needed accessibility information
 
-For each finding:
+**Focus and keyboard navigation** `[WCAG 2.1.1]` `[WCAG 2.4.3]` (applies to hardware keyboard and Switch Access):
+- Custom interactive elements that are not reachable via external keyboard
+- Focus order that doesn't match visual/logical reading order
+- Flag any `accessibilityViewIsModal` or `AccessibilityFocusScope` that incorrectly blocks focus
+
+**Form labels** `[WCAG 1.3.1]`:
+- Text inputs without a visible label AND an accessible label — `placeholder` text alone is not sufficient
+- Form fields without error message association when in error state
+
+**Error identification** `[WCAG 3.3.1]`:
+- Validation errors communicated only by color or icon — must also include a text description
+- Error messages not associated programmatically with their input field
+
+For each finding, include the WCAG criterion tag:
 ```
-[ACCESSIBILITY] path/to/file.tsx:87
+[ACCESSIBILITY] path/to/file.tsx:87 [WCAG 4.1.2]
   Issue: Pressable has no accessibilityLabel
   Element: <Pressable onPress={handleDelete}><Icon name="trash" /></Pressable>
   Fix: Add accessibilityLabel="Delete item" and accessibilityRole="button"
@@ -179,6 +205,68 @@ After all findings, write a summary table:
 | **Total** | | | |
 
 End with **3-5 prioritized next steps** based on the highest-impact findings.
+
+---
+
+## Interactive Fix Mode
+
+After presenting the summary table and next steps, enter interactive fix mode.
+
+### Step 1 — Ask which categories to fix
+
+Use AskUserQuestion with `multiSelect: true`:
+- question: "Which categories of findings would you like me to fix now?"
+- header: "Fix categories"
+- options:
+  - Token drift (replace hardcoded values with token references)
+  - Accessibility (apply accessibilityLabel, Semantics, contentDescription, and role fixes)
+  - Inconsistency / Touch targets (consolidate patterns, enforce minimum touch target sizes)
+  - Contrast / Platform conventions (color fixes and platform-specific convention violations)
+
+If the user selects none, end here. If they close or skip, end here.
+
+### Step 2 — Fix findings one at a time
+
+For each selected category, go through every finding in that category one by one.
+
+Before each fix, show the finding in full and use AskUserQuestion:
+- question: "Fix this finding?\n\n[CATEGORY] path/to/file:line\n  Issue: [issue]\n  Fix: [proposed fix]"
+- header: "Apply fix?"
+- options:
+  - Yes — apply this fix
+  - Skip — leave it for now
+  - Stop — stop fixing this category
+
+If **Yes**: apply the fix to the file. Then show a brief diff summary:
+```
+Fixed: src/components/Button.tsx:42
+  - <Pressable onPress={handleDelete}>
+  + <Pressable onPress={handleDelete} accessibilityLabel="Delete item" accessibilityRole="button">
+```
+
+If **Skip**: move to the next finding in the category.
+
+If **Stop**: stop the current category. Move to the next selected category if any.
+
+### Step 3 — Category summary
+
+After finishing all findings in a category (or on Stop):
+```
+Accessibility: 5 fixes applied, 2 skipped
+```
+
+### Step 4 — Final summary
+
+After all selected categories are processed:
+```
+Fix session complete.
+  Token drift:               3 applied, 1 skipped
+  Accessibility:             5 applied, 2 skipped
+  Inconsistency/Touch:       2 applied, 0 skipped
+  Contrast/Platform:         1 applied, 1 skipped
+```
+
+---
 
 ## Scope
 
