@@ -35,6 +35,11 @@ mkdir -p /path/to/your/project/.claude/commands
 cp ~/design-system-agent/commands/setup-design-system.md /path/to/your/project/.claude/commands/
 ```
 
+If the terminal command doesn't work, do it manually:
+- In Finder, open your project folder
+- Create a folder called `.claude`, then inside it create a folder called `commands`
+- Copy `setup-design-system.md` from this repo's `commands/` folder into it
+
 **3. Open Claude Code from your project root:**
 
 ```bash
@@ -117,6 +122,11 @@ git clone https://github.com/jarvismoore1016/design-system-agent.git ~/design-sy
 mkdir -p /path/to/your/mobile/project/.claude/commands
 cp ~/design-system-agent/commands/setup-mobile-design-system.md /path/to/your/mobile/project/.claude/commands/
 ```
+
+If the terminal command doesn't work, do it manually:
+- In Finder, open your project folder
+- Create a folder called `.claude`, then inside it create a folder called `commands`
+- Copy `setup-mobile-design-system.md` from this repo's `commands/` folder into it
 
 **3. Open Claude Code from your project root:**
 
