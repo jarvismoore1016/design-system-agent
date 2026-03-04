@@ -1,6 +1,6 @@
 # Design System Agent
 
-**Give any web project an AI-powered design system assistant in 15 minutes — using Claude Code.**
+**Give any project an AI-powered design system assistant in 15 minutes — using Claude Code.**
 
 One command. No dependencies. Works with whatever stack you already have.
 
