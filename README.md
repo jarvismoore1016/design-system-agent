@@ -66,6 +66,8 @@ Setup takes 15–20 minutes. Future command runs are fast because they use `CLAU
 
 ## Supported Stacks
 
+### Web
+
 - Vanilla HTML + CSS
 - React (JavaScript or TypeScript)
 - Vue 2 and Vue 3
@@ -75,6 +77,31 @@ Setup takes 15–20 minutes. Future command runs are fast because they use `CLAU
 - Astro
 - Nuxt
 - Any project with CSS, SCSS, Less, or Stylus
+
+### Mobile Apps
+
+- React Native (JavaScript or TypeScript)
+- Flutter (Dart)
+- SwiftUI (Swift)
+- Kotlin Compose (Jetpack Compose)
+
+---
+
+## Mobile Quick Start
+
+```bash
+# 1. Copy the mobile setup command into your project
+mkdir -p .claude/commands
+cp /path/to/design-system-agent/commands/setup-mobile-design-system.md .claude/commands/
+
+# 2. Open Claude Code in your project directory
+# 3. Run:
+/setup-mobile-design-system
+```
+
+The mobile wizard detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose), extracts design values in the appropriate format, and creates the same three slash commands and CLAUDE.md as the web setup — all tuned for mobile conventions, touch targets, and platform-specific accessibility.
+
+> **Web and mobile use separate setup commands** but produce the same workflow: one token file, three slash commands, one CLAUDE.md. Install the web command, the mobile command, or both, depending on your project.
 
 ---
 
@@ -111,9 +138,18 @@ Setup takes 15–20 minutes. Future command runs are fast because they use `CLAU
 
 The `examples/` folder shows real output from each command:
 
+**Web**
 - `sample-audit.md` — what an audit report looks like
 - `sample-component.html` — a generated component
 - `sample-docs.md` — generated component documentation
+
+**Mobile**
+- `sample-audit-mobile.md` — mobile audit report (React Native)
+- `sample-component-rn.tsx` — React Native Button (Pressable, tokens, accessibility)
+- `sample-component-flutter.dart` — Flutter AppButton (Semantics, ThemeData access)
+- `sample-component-swiftui.swift` — SwiftUI AppButton (ButtonStyle, accessibilityLabel)
+- `sample-component-compose.kt` — Compose AppButton (semantics, token references)
+- `sample-docs-mobile.md` — mobile component documentation (React Native Button)
 
 The `templates/` folder contains the reference versions of each slash command if you want to understand, customize, or rebuild them.
 
