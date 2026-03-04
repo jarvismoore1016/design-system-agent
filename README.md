@@ -22,17 +22,33 @@ After running setup, your project will have four permanent tools:
 
 ## Quick Start
 
-```bash
-# 1. Copy the setup command into your project
-mkdir -p .claude/commands
-cp /path/to/design-system-agent/commands/setup-design-system.md .claude/commands/
+**1. Clone this repo** (or download it) somewhere on your machine:
 
-# 2. Open Claude Code in your project directory
-# 3. Run:
+```bash
+git clone https://github.com/jarvismoore1016/design-system-agent.git ~/design-system-agent
+```
+
+**2. Copy the setup command into your project:**
+
+```bash
+mkdir -p /path/to/your/project/.claude/commands
+cp ~/design-system-agent/commands/setup-design-system.md /path/to/your/project/.claude/commands/
+```
+
+**3. Open Claude Code from your project root:**
+
+```bash
+cd /path/to/your/project
+claude
+```
+
+**4. Run the setup command:**
+
+```
 /setup-design-system
 ```
 
-That's it. Claude walks you through the rest.
+Claude will scan your project and walk you through the rest — no additional input needed until it asks you to confirm choices.
 
 ---
 
@@ -89,19 +105,35 @@ Setup takes 15–20 minutes. Future command runs are fast because they use `CLAU
 
 ## Mobile Quick Start
 
-```bash
-# 1. Copy the mobile setup command into your project
-mkdir -p .claude/commands
-cp /path/to/design-system-agent/commands/setup-mobile-design-system.md .claude/commands/
+**1. Clone this repo** if you haven't already:
 
-# 2. Open Claude Code in your project directory
-# 3. Run:
+```bash
+git clone https://github.com/jarvismoore1016/design-system-agent.git ~/design-system-agent
+```
+
+**2. Copy the mobile setup command into your project:**
+
+```bash
+mkdir -p /path/to/your/mobile/project/.claude/commands
+cp ~/design-system-agent/commands/setup-mobile-design-system.md /path/to/your/mobile/project/.claude/commands/
+```
+
+**3. Open Claude Code from your project root:**
+
+```bash
+cd /path/to/your/mobile/project
+claude
+```
+
+**4. Run the setup command:**
+
+```
 /setup-mobile-design-system
 ```
 
-The mobile wizard detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose), extracts design values in the appropriate format, and creates the same three slash commands and CLAUDE.md as the web setup — all tuned for mobile conventions, touch targets, and platform-specific accessibility.
+Claude detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose), extracts design values in the right format for that platform, and creates the same three slash commands and CLAUDE.md as the web setup.
 
-> **Web and mobile use separate setup commands** but produce the same workflow: one token file, three slash commands, one CLAUDE.md. Install the web command, the mobile command, or both, depending on your project.
+> **Web and mobile use separate setup commands** but produce the same workflow: one token file, three slash commands, one CLAUDE.md. Copy the web command, the mobile command, or both — depending on your project.
 
 ---
 
