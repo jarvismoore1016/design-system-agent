@@ -137,6 +137,105 @@ End with **3-5 prioritized next steps** based on the highest-impact findings —
 
 ---
 
+## Audit Log
+
+After presenting the summary table and next steps, write the audit to the persistent log **before** entering interactive fix mode — this ensures findings are recorded even if the user skips fixes entirely.
+
+### 1 — Capture timestamp and audit number
+
+Run these two Bash commands:
+
+```bash
+date "+%Y-%m-%d %H:%M"
+```
+```bash
+date "+%Y-%m-%d-%H-%M"
+```
+
+The first gives the human-readable date for display (`YYYY-MM-DD HH:MM`). The second gives the filename-safe timestamp (`YYYY-MM-DD-HH-MM`). Store both for use in steps below.
+
+To determine the audit number (N): count `.md` files in `design-system-audits/` that are not named `SUMMARY.md`. If the directory does not exist yet, N = 1.
+
+```bash
+ls design-system-audits/*.md 2>/dev/null | grep -v SUMMARY.md | wc -l
+```
+
+Add 1 to the result.
+
+### 2 — Create the audit directory
+
+```bash
+mkdir -p design-system-audits
+```
+
+### 3 — Write the individual audit report file
+
+Write the complete audit to `design-system-audits/{filename-timestamp}.md`. Use this exact structure:
+
+```markdown
+# Audit #{N} — {YYYY-MM-DD HH:MM}
+
+**Project**: {project name — use directory name if CLAUDE.md has no project name}
+**Scanned**: {N} files, {N} lines
+**Scope**: {the path passed as $1, or "Full project" if no argument}
+**Previous audit**: {link to the most recent prior audit file, e.g. [Audit #2](2025-02-20-10-14.md), or "None — first audit"}
+
+---
+
+## Findings
+
+{Paste all TOKEN DRIFT, ACCESSIBILITY, INCONSISTENCY, and CONTRAST finding blocks exactly as shown to the user — do not summarize or truncate}
+
+---
+
+## Summary
+
+| Category | Critical | Warning | Suggestion |
+|----------|----------|---------|------------|
+| Token drift | {N} | {N} | {N} |
+| Accessibility | {N} | {N} | {N} |
+| Inconsistency | {N} | {N} | {N} |
+| Contrast | {N} | {N} | {N} |
+| **Total** | **{N}** | **{N}** | **{N}** |
+
+---
+
+## Prioritized Next Steps
+
+{The 3-5 prioritized next steps exactly as shown to the user}
+
+---
+
+## Fix Session
+
+> *No fix session run for this audit.*
+```
+
+The Fix Session section starts as a placeholder. It will be updated in place after interactive fix mode completes.
+
+### 4 — Update SUMMARY.md
+
+Read `design-system-audits/SUMMARY.md`. If it does not exist, create it with this header:
+
+```markdown
+# Design System Audit Log
+
+Tracks design system health over time. Most recent audit first.
+
+| # | Date | Files | Token Drift | Accessibility | Inconsistency | Contrast | Total | Fixes Applied | Report |
+|---|------|-------|-------------|---------------|---------------|----------|-------|---------------|--------|
+```
+
+Then insert a new row **at the top of the table** (below the header row), so the most recent audit always appears first:
+
+```
+| {N} | {YYYY-MM-DD HH:MM} | {N} files | {C}C {W}W {S}S | {C}C {W}W {S}S | {C}C {W}W {S}S | {C}C {W}W {S}S | {total} | — | [{filename-timestamp}.md]({filename-timestamp}.md) |
+```
+
+Use C = Critical count, W = Warning count, S = Suggestion count from the summary table. Leave "Fixes Applied" as `—` for now; it will be updated after the fix session.
+
+---
+
 ## Interactive Fix Mode
 
 After presenting the summary table and next steps, enter interactive fix mode.
@@ -186,9 +285,9 @@ Token drift: 4 fixes applied, 2 skipped
 
 Then move to the next selected category if any.
 
-### Step 4 — Final summary
+### Step 4 — Final summary and log update
 
-After all selected categories are processed:
+After all selected categories are processed, show:
 ```
 Fix session complete.
   Token drift:    4 applied, 2 skipped
@@ -196,6 +295,52 @@ Fix session complete.
   Inconsistency:  0 applied, 3 skipped
   Contrast:       1 applied, 0 skipped
 ```
+
+Then update the audit log to record the fix session results.
+
+**4a — Update the Fix Session section in the individual audit file**
+
+Find the audit file written in the Audit Log step (`design-system-audits/{filename-timestamp}.md`). Replace the Fix Session placeholder:
+
+```markdown
+## Fix Session
+
+> *No fix session run for this audit.*
+```
+
+With the actual fix session record:
+
+```markdown
+## Fix Session
+
+**Categories selected**: Token drift, Accessibility
+
+| Category | Applied | Skipped |
+|----------|---------|---------|
+| Token drift | 4 | 2 |
+| Accessibility | 6 | 1 |
+| Inconsistency | 0 | 3 |
+| Contrast | 1 | 0 |
+| **Total** | **11** | **6** |
+
+### Changes Made
+
+{List each fix that was applied, one per line:}
+- `path/to/file.css:42` — Replaced `color: #2563EB` with `var(--color-primary)`
+- `path/to/file.html:87` — Added `aria-label="Email address"` to email input
+```
+
+If the user selected no categories (or skipped all fixes), update the placeholder to:
+
+```markdown
+## Fix Session
+
+> *No fixes applied — user skipped fix mode.*
+```
+
+**4b — Update the Fixes Applied column in SUMMARY.md**
+
+Read `design-system-audits/SUMMARY.md` and find the row for this audit (matched by the filename-timestamp link). Update the `Fixes Applied` cell from `—` to the total number of fixes applied (e.g., `11`).
 
 ---
 
