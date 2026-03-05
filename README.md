@@ -8,15 +8,18 @@ One command. No dependencies. Works with whatever stack you already have.
 
 ## What You Get
 
-After running setup, your project will have four permanent tools:
+After running setup, your project will have a token file, three slash commands, and a `CLAUDE.md` for persistent context. Copy additional commands from the `commands/` folder to unlock the full set:
 
-| What | Where | How to use |
-|------|-------|------------|
-| Design token file | Project root | Reference in your CSS/JS |
-| `/audit-ui` command | `.claude/commands/` | Scan for inconsistencies anytime |
-| `/generate-component` command | `.claude/commands/` | Build new components on demand |
-| `/generate-docs` command | `.claude/commands/` | Document components as you go |
-| `CLAUDE.md` | Project root | Persistent design context for every Claude session |
+| Command | What it does |
+|---------|--------------|
+| `/setup-design-system` | Scan an existing web project, extract design values, build tokens and commands |
+| `/setup-mobile-design-system` | Same as above for React Native, Flutter, SwiftUI, or Kotlin Compose |
+| `/build-design-system` | Generate a complete web design system from scratch — no existing codebase needed |
+| `/build-mobile-design-system` | Generate a complete mobile design system from scratch |
+| `/audit-ui` | Scan for token drift, WCAG 2.1 AA issues, and inconsistencies — then fix interactively |
+| `/generate-component` | Generate one component, all components, or scan for unextracted patterns |
+| `/generate-docs` | Document one component or all components at once |
+| `/sync-figma` | Sync tokens and components between your codebase and a Figma file |
 
 ---
 
@@ -147,7 +150,7 @@ Claude detects your platform (React Native, Flutter, SwiftUI, or Kotlin Compose)
 
 ---
 
-## After Setup
+## Commands
 
 **`/audit-ui`** — Scan for design system issues, then fix findings interactively
 
@@ -202,8 +205,6 @@ Requires Figma MCP or Figma Console MCP to be connected. Four modes:
 - **Compare to Figma** — find color, spacing, and typography drift between your code and the design
 - **Generate from Figma** — build a component from a Figma spec using your project tokens
 - **Create in Figma** — push a code component into your Figma file as a proper component set
-
----
 
 ---
 
