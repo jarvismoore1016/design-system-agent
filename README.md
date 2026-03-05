@@ -19,6 +19,7 @@ After running setup, your project will have a token file, three slash commands, 
 | `/audit-ui` | Scan for token drift, WCAG 2.1 AA issues, and inconsistencies — then fix interactively |
 | `/generate-component` | Generate one component, all components, or scan for unextracted patterns |
 | `/generate-docs` | Document one component or all components at once |
+| `/storybook` | Set up Storybook from scratch, sync missing stories, or enrich existing story docs |
 | `/sync-figma` | Sync tokens and components between your codebase and a Figma file |
 
 ---
@@ -193,6 +194,22 @@ Walks through a six-step wizard: project type → tokens → component selection
 ```
 
 Detects or asks for your platform (React Native, Flutter, SwiftUI, Kotlin Compose) and generates token files and components in the correct format for that platform.
+
+**`/storybook`** — Set up and maintain Storybook for your design system
+
+```
+/storybook init   # Scaffold Storybook from scratch — config, preview, and story files
+/storybook sync   # Generate missing stories for components that don't have them yet
+/storybook docs   # Enrich existing stories with controls, descriptions, and AllVariants
+/storybook        # Ask which mode to run (interactive prompt)
+```
+
+Three modes:
+- **Init** — detects your framework, installs the right adapter, generates `.storybook/main.ts`, `.storybook/preview.ts` (with your token file imported), and story files for every component. Shows a pre-write summary and asks before creating anything.
+- **Sync** — compares your component list to existing story files, flags missing stories and outdated `argTypes`, then generates stories for the ones you select.
+- **Docs** — enriches existing stories with `autodocs` tags, `argTypes` descriptions, component summaries, and `AllVariants` / `Playground` stories pulled from your existing component docs.
+
+---
 
 **`/sync-figma`** — Sync tokens and components with a connected Figma file
 
